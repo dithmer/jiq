@@ -1,5 +1,5 @@
 use ratatui::{
-    crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind},
+    crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
     layout::{Constraint, Layout},
     style::{Color, Style},
     widgets::{Block, Borders, Paragraph},
@@ -8,10 +8,14 @@ use ratatui::{
 use std::io;
 use tui_textarea::TextArea;
 
+use crate::query::executor::JqExecutor;
+
 /// Application state
 pub struct App {
     json_input: String,
     textarea: TextArea<'static>,
+    executor: JqExecutor,
+    query_result: Result<String, String>,
     should_quit: bool,
 }
 
@@ -32,9 +36,17 @@ impl App {
         // Remove default underline from cursor line
         textarea.set_cursor_line_style(Style::default());
 
+        // Create JQ executor
+        let executor = JqExecutor::new(json_input.clone());
+
+        // Initially show original JSON (identity filter)
+        let query_result = Ok(json_input.clone());
+
         Self {
             json_input,
             textarea,
+            executor,
+            query_result,
             should_quit: false,
         }
     }
@@ -58,17 +70,28 @@ impl App {
 
     /// Handle key press events
     fn handle_key_event(&mut self, key: KeyEvent) {
+        // Handle Ctrl+C
+        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            self.should_quit = true;
+            return;
+        }
+
         match key.code {
             KeyCode::Esc | KeyCode::Char('q') => {
                 self.should_quit = true;
             }
             KeyCode::Enter => {
-                // Prevent newlines in single-line input
-                // Query executes on every keystroke (v0.5.0), not on Enter
+                // Prevent newlines in single-line input (do nothing)
             }
             _ => {
-                // Pass all other keys to textarea for editing
-                self.textarea.input(key);
+                // Pass key to textarea for editing
+                let content_changed = self.textarea.input(key);
+
+                // Execute query on every keystroke that changes content
+                if content_changed {
+                    let query = self.textarea.lines()[0].as_ref();
+                    self.query_result = self.executor.execute(query);
+                }
             }
         }
     }
@@ -99,9 +122,19 @@ impl App {
             .title(" Results ")
             .border_style(Style::default().fg(Color::Cyan));
 
-        let content = Paragraph::new(self.json_input.as_str())
-            .block(block)
-            .style(Style::default().fg(Color::White));
+        // Display query results or error message
+        let (text, style) = match &self.query_result {
+            Ok(result) => {
+                // Use default style to preserve jq's ANSI color codes
+                (result.as_str(), Style::default())
+            }
+            Err(error) => {
+                // Use red color for error messages
+                (error.as_str(), Style::default().fg(Color::Red))
+            }
+        };
+
+        let content = Paragraph::new(text).block(block).style(style);
 
         frame.render_widget(content, area);
     }

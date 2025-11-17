@@ -6,6 +6,7 @@ use std::path::PathBuf;
 mod app;
 mod error;
 mod input;
+mod query;
 
 use app::App;
 use error::JiqError;

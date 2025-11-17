@@ -1,23 +1,40 @@
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
+    crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind},
     layout::{Constraint, Layout},
     style::{Color, Style},
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
 use std::io;
+use tui_textarea::TextArea;
 
 /// Application state
 pub struct App {
     json_input: String,
+    textarea: TextArea<'static>,
     should_quit: bool,
 }
 
 impl App {
     /// Create a new App instance with JSON input
     pub fn new(json_input: String) -> Self {
+        // Create textarea for query input
+        let mut textarea = TextArea::default();
+
+        // Configure for single-line input
+        textarea.set_block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(" Query ")
+                .border_style(Style::default().fg(Color::DarkGray)),
+        );
+
+        // Remove default underline from cursor line
+        textarea.set_cursor_line_style(Style::default());
+
         Self {
             json_input,
+            textarea,
             should_quit: false,
         }
     }
@@ -45,8 +62,13 @@ impl App {
             KeyCode::Esc | KeyCode::Char('q') => {
                 self.should_quit = true;
             }
+            KeyCode::Enter => {
+                // Prevent newlines in single-line input
+                // Query executes on every keystroke (v0.5.0), not on Enter
+            }
             _ => {
-                // Other keys will be handled in future versions
+                // Pass all other keys to textarea for editing
+                self.textarea.input(key);
             }
         }
     }
@@ -63,11 +85,11 @@ impl App {
         let results_area = layout[0];
         let input_area = layout[1];
 
-        // Render results pane with hardcoded content
+        // Render results pane
         self.render_results_pane(frame, results_area);
 
-        // Render input field with hardcoded content
-        self.render_input_field(frame, input_area);
+        // Render textarea input field
+        frame.render_widget(&self.textarea, input_area);
     }
 
     /// Render the results pane (top)
@@ -80,20 +102,6 @@ impl App {
         let content = Paragraph::new(self.json_input.as_str())
             .block(block)
             .style(Style::default().fg(Color::White));
-
-        frame.render_widget(content, area);
-    }
-
-    /// Render the input field (bottom)
-    fn render_input_field(&self, frame: &mut Frame, area: ratatui::layout::Rect) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .title(" Query ")
-            .border_style(Style::default().fg(Color::DarkGray));
-
-        let content = Paragraph::new("(query input will go here)")
-            .block(block)
-            .style(Style::default().fg(Color::Gray));
 
         frame.render_widget(content, area);
     }

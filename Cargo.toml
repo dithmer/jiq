@@ -1,6 +1,6 @@
 [package]
 name = "jiq"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Interactive JSON query tool with real-time filtering using jq"
@@ -11,8 +11,11 @@ categories = ["command-line-utilities", "development-tools"]
 # TUI framework
 ratatui = "0.29"
 
-# Cross-platform terminal manipulation
-crossterm = { version = "0.29", features = ["use-dev-tty"] }
+# Cross-platform terminal manipulation with dev-tty for piped stdin
+crossterm = { version = "0.28.1", features = ["use-dev-tty"] }
+
+# Text editor widget
+tui-textarea = "0.7"
 
 # Better error handling for TUI apps
 color-eyre = "0.6"

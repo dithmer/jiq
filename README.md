@@ -1,151 +1,169 @@
-# jiq - JSON Interactive Query Tool
+# jiq
 
-Interactive command-line tool for querying JSON data in real-time using jq syntax.
+> Interactive JSON query tool with real-time filtering and VIM keybindings
 
-## Requirements
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
 
+## Features
 
-- **jq** - JSON processor (required)
-  - MacOS: `brew install jq`
-  - Linux: See https://jqlang.org/download/
+- **Real-time query execution** - See results as you type
+- **Full VIM keybindings** - Modal editing (INSERT/NORMAL/OPERATOR modes)
+- **Syntax highlighting** - Colorized JSON output
+- **Flexible output** - Export results or query string
+- **Undo/redo support** - Never lose your work
+- **Zero configuration** - Works out of the box
 
 ## Installation
 
+### Requirements
+- **jq** - JSON processor ([installation guide](https://jqlang.org/download/))
+
 ### From Source
-```sh
+```bash
 git clone https://github.com/bellicose100xp/jiq
 cd jiq
 cargo build --release
 sudo cp target/release/jiq /usr/local/bin/
 ```
 
-## Usage
+## Quick Start
 
-```sh
-# Read from file
+```bash
+# From file
 jiq data.json
 
-# Read from stdin (pipe)
+# From stdin
 cat data.json | jiq
 echo '{"name": "Alice", "age": 30}' | jiq
 curl https://api.example.com/data | jiq
 ```
 
-## Interactive Mode
+## Usage
 
-jiq features **full VIM keybindings** for efficient editing and navigation.
+**Workflow:**
+1. Start typing your jq query (begins in INSERT mode)
+2. See results update in real-time
+3. Press `Tab` to navigate results
+4. Press `Enter` to output results, or `Shift+Enter` to output query
 
-1. **Type jq queries** in the input field (bottom pane) - starts in INSERT mode
-2. **See results instantly** in the results pane (top pane)
-3. **Press ESC** to enter NORMAL mode for VIM navigation
-4. **Press Tab** to switch focus between panes
-5. **Scroll results** with VIM keys when focused
-6. **Exit with output:**
-   - **Enter** → Output filtered JSON results
-   - **Shift+Enter** → Output query string only (for scripting)
-   - **q** or **Ctrl+C** → Exit without output
+**VIM users:** Press `ESC` to enter NORMAL mode for advanced editing.
 
 ## Keybindings
 
-### Global Keys (work anywhere)
+<details>
+<summary><b>Global Keys</b> (work anywhere)</summary>
+
 | Key | Action |
 |-----|--------|
 | `Tab` | Switch focus between Input and Results |
-| `Enter` | Exit and output filtered JSON results |
+| `Enter` | Exit and output filtered JSON |
 | `Shift+Enter` | Exit and output query string only |
-| `q` | Quit without output |
-| `Ctrl+C`  | Quit without output |
+| `q` / `Ctrl+C` | Quit without output |
 
-### Input Field - VIM Modes
+</details>
 
-jiq uses VIM-style modal editing with **INSERT** and **NORMAL** modes.
+<details>
+<summary><b>Input Field - INSERT Mode</b> (cyan border)</summary>
 
-#### INSERT Mode (default, cyan border)
 | Key | Action |
 |-----|--------|
 | Type characters | Edit jq query (real-time execution) |
-| `←/→` | Move cursor |
-| `Home/End` | Jump to start/end of line |
-| `Backspace/Delete` | Delete characters |
+| `←` / `→` | Move cursor |
+| `Home` / `End` | Jump to line start/end |
+| `Backspace` / `Delete` | Delete characters |
 | `ESC` | Switch to NORMAL mode |
 
-#### NORMAL Mode (yellow border)
-| Key | Action |
-|-----|--------|
-| **Navigation** | |
-| `h` / `←` | Move cursor left |
-| `l` / `→` | Move cursor right |
-| `0` / `Home` | Jump to line start |
-| `$` / `End` | Jump to line end |
-| `w` | Jump to next word start |
-| `b` | Jump to previous word start |
-| `e` | Jump to next word end |
-| **Insert Commands** | |
-| `i` | Enter INSERT mode at cursor |
-| `a` | Enter INSERT mode after cursor |
-| `I` | Enter INSERT mode at line start |
-| `A` | Enter INSERT mode at line end |
-| **Delete** | |
-| `x` | Delete character at cursor |
-| `X` | Delete character before cursor |
-| `dw` | Delete word forward |
-| `db` | Delete word backward |
-| `de` | Delete to word end |
-| `d$` | Delete to line end |
-| `d0` | Delete to line start |
-| `dd` | Delete entire line |
-| **Change (delete + insert)** | |
-| `cw` | Change word forward |
-| `cb` | Change word backward |
-| `ce` | Change to word end |
-| `c$` | Change to line end |
-| `cc` | Change entire line |
-| **Undo/Redo** | |
-| `u` | Undo last change |
-| `Ctrl+r` | Redo last undone change |
+</details>
 
-### Results Pane (when focused)
+<details>
+<summary><b>Input Field - NORMAL Mode</b> (yellow border)</summary>
+
+**Navigation**
 | Key | Action |
 |-----|--------|
-| `↑/↓` or `j/k` | Scroll up/down 1 line |
-| `J/K` | Scroll up/down 10 lines |
-| `Ctrl+u` / `PageUp` | Scroll up half page |
-| `Ctrl+d` / `PageDown` | Scroll down half page |
+| `h` / `←` | Move left |
+| `l` / `→` | Move right |
+| `0` / `Home` | Line start |
+| `$` / `End` | Line end |
+| `w` | Next word start |
+| `b` | Previous word start |
+| `e` | Word end |
+
+**Editing**
+| Key | Action |
+|-----|--------|
+| `i` | Enter INSERT at cursor |
+| `a` | Enter INSERT after cursor |
+| `I` | Enter INSERT at line start |
+| `A` | Enter INSERT at line end |
+| `x` | Delete char at cursor |
+| `X` | Delete char before cursor |
+
+**Operators** (delete/change + motion)
+| Key | Action |
+|-----|--------|
+| `dw` / `db` / `de` | Delete word forward/back/end |
+| `d$` / `d0` | Delete to end/start |
+| `dd` | Delete entire line |
+| `cw` / `cb` / `ce` | Change word forward/back/end |
+| `c$` / `cc` | Change to end/entire line |
+
+**Undo/Redo**
+| Key | Action |
+|-----|--------|
+| `u` | Undo |
+| `Ctrl+r` | Redo |
+
+</details>
+
+<details>
+<summary><b>Results Pane</b> (when focused)</summary>
+
+| Key | Action |
+|-----|--------|
+| `j` / `k` / `↑` / `↓` | Scroll 1 line |
+| `J` / `K` | Scroll 10 lines |
+| `Ctrl+d` / `PageDown` | Scroll half page down |
+| `Ctrl+u` / `PageUp` | Scroll half page up |
 | `g` / `Home` | Jump to top |
 | `G` | Jump to bottom |
 
+</details>
+
 ## Examples
 
-### Example 1: Filter and copy results
-```sh
+**Filter active users:**
+```bash
 cat users.json | jiq
 # Type: .users[] | select(.active == true)
-# Press Enter
-# Results copied to clipboard or piped elsewhere
+# Press Enter to output results
 ```
 
-### Example 2: Extract query for reuse
-```sh
-cat complex_data.json | jiq
-# Experiment with query: .data.items[] | select(.price > 100) | .name
-# Press Shift+Enter to get the query string
-# Save query: jiq data.json > my_query.txt
+**Extract query for scripts:**
+```bash
+cat data.json | jiq
+# Experiment with: .items[] | select(.price > 100) | .name
+# Press Shift+Enter to get just the query string
 ```
 
-### Example 3: Pipeline usage
-```sh
-# Get query interactively, then use in script
-QUERY=$(cat data.json | jiq <<< "" | tail -1)  # Shift+Enter to get query
-echo $QUERY | xargs -I {} jq {} data.json
+**Pipeline integration:**
+```bash
+# Build query interactively, then reuse
+QUERY=$(echo '{}' | jiq)  # Press Shift+Enter after building query
+echo $QUERY | xargs -I {} jq {} mydata.json
 ```
 
 ## Tips
 
-- **Empty query** shows original JSON (identity filter `.`)
-- **Invalid queries** display jq error messages in red
-- **Results auto-scroll** to top when query changes
-- **Help text** at bottom shows available keys for focused pane
+- Empty query shows original JSON (identity filter `.`)
+- Invalid queries display jq errors in red
+- Color-coded modes: Cyan (INSERT), Yellow (NORMAL), Green (OPERATOR)
+- Results auto-scroll to top when query changes
 
 ## License
 
-Licensed under MIT OR Apache-2.0
+Dual-licensed under [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE)
+
+## Contributing
+
+Issues and pull requests welcome at [github.com/bellicose100xp/jiq](https://github.com/bellicose100xp/jiq)

@@ -1,10 +1,12 @@
 [package]
 name = "jiq"
-version = "2.0.2"
+version = "2.0.3"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Interactive JSON query tool with real-time filtering using jq"
 keywords = ["json", "jq", "cli", "interactive", "tui"]
+repository = "https://github.com/bellicose100xp/jiq"
+homepage = "https://github.com/bellicose100xp/jiq"
 categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]

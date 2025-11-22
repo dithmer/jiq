@@ -4,8 +4,13 @@ use ratatui::{
 };
 use tui_textarea::TextArea;
 
+use crate::autocomplete::{AutocompleteState, get_suggestions};
+use crate::autocomplete::json_analyzer::JsonAnalyzer;
 use crate::editor::EditorMode;
 use crate::query::executor::JqExecutor;
+
+// Autocomplete performance constants
+const MIN_CHARS_FOR_AUTOCOMPLETE: usize = 1;
 
 /// Which pane has focus
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,6 +38,8 @@ pub struct App {
     pub results_viewport_height: u16,
     pub output_mode: Option<OutputMode>,
     pub should_quit: bool,
+    pub autocomplete: AutocompleteState,
+    pub json_analyzer: JsonAnalyzer,
 }
 
 impl App {
@@ -61,6 +68,10 @@ impl App {
         // Cache the initial successful result
         let last_successful_result = query_result.as_ref().ok().cloned();
 
+        // Initialize JSON analyzer with the input JSON
+        let mut json_analyzer = JsonAnalyzer::new();
+        let _ = json_analyzer.analyze(&json_input);
+
         Self {
             textarea,
             executor,
@@ -72,6 +83,8 @@ impl App {
             results_viewport_height: 0, // Will be set during first render
             output_mode: None, // No output mode set until Enter/Shift+Enter
             should_quit: false,
+            autocomplete: AutocompleteState::new(),
+            json_analyzer,
         }
     }
 
@@ -103,6 +116,137 @@ impl App {
         let total_lines = self.results_line_count();
         total_lines.saturating_sub(self.results_viewport_height)
     }
+
+    /// Update autocomplete suggestions based on current query and cursor position
+    pub fn update_autocomplete(&mut self) {
+        let query = self.query();
+        let cursor_pos = self.textarea.cursor().1; // Column position
+
+        // Performance optimization: only show autocomplete for non-empty queries
+        if query.trim().len() < MIN_CHARS_FOR_AUTOCOMPLETE {
+            self.autocomplete.hide();
+            return;
+        }
+
+        // Get suggestions based on context
+        let suggestions = get_suggestions(query, cursor_pos, &self.json_analyzer);
+
+        // Update autocomplete state
+        self.autocomplete.update_suggestions(suggestions);
+    }
+
+    /// Insert an autocomplete suggestion at the current cursor position
+    pub fn insert_autocomplete_suggestion(&mut self, suggestion: &str) {
+        let query = self.query().to_string();
+        let cursor_pos = self.textarea.cursor().1;
+        let before_cursor = &query[..cursor_pos.min(query.len())];
+
+        // Find the start position to replace from
+        // For field suggestions (starting with .), find the last dot
+        // For other suggestions, find the token start
+        let replace_start = if suggestion.starts_with('.') {
+            // Field suggestion - find the last dot in before_cursor
+            // This handles nested fields like .services.service correctly
+            before_cursor.rfind('.').unwrap_or(0)
+        } else {
+            // Function/operator/pattern suggestion - find token start
+            find_token_start(before_cursor)
+        };
+
+        // Build the new query with the suggestion
+        let new_query = format!(
+            "{}{}{}",
+            &query[..replace_start],
+            suggestion,
+            &query[cursor_pos.min(query.len())..]
+        );
+
+        // Replace the entire line and set cursor position
+        self.textarea.delete_line_by_head();
+        self.textarea.insert_str(&new_query);
+
+        // Move cursor to end of inserted suggestion
+        let target_pos = replace_start + suggestion.len();
+        self.move_cursor_to_column(target_pos);
+
+        // Hide autocomplete and execute query
+        self.autocomplete.hide();
+        self.execute_query_and_update();
+    }
+
+    /// Move cursor to a specific column position (helper method)
+    fn move_cursor_to_column(&mut self, target_col: usize) {
+        let current_col = self.textarea.cursor().1;
+
+        match target_col.cmp(&current_col) {
+            std::cmp::Ordering::Less => {
+                // Move backward
+                for _ in 0..(current_col - target_col) {
+                    self.textarea.move_cursor(tui_textarea::CursorMove::Back);
+                }
+            }
+            std::cmp::Ordering::Greater => {
+                // Move forward
+                for _ in 0..(target_col - current_col) {
+                    self.textarea.move_cursor(tui_textarea::CursorMove::Forward);
+                }
+            }
+            std::cmp::Ordering::Equal => {
+                // Already at target position
+            }
+        }
+    }
+
+    /// Execute query and update results (helper method)
+    fn execute_query_and_update(&mut self) {
+        let query = self.query();
+        self.query_result = self.executor.execute(query);
+        if let Ok(result) = &self.query_result {
+            self.last_successful_result = Some(result.clone());
+        }
+        self.results_scroll = 0;
+    }
+}
+
+/// Find the start position of the current token
+fn find_token_start(text: &str) -> usize {
+    let chars: Vec<char> = text.chars().collect();
+    let mut i = chars.len();
+
+    // Skip trailing whitespace
+    while i > 0 && chars[i - 1].is_whitespace() {
+        i -= 1;
+    }
+
+    // Find the start of the current token
+    while i > 0 {
+        let ch = chars[i - 1];
+        if is_token_delimiter(ch) {
+            break;
+        }
+        i -= 1;
+    }
+
+    i
+}
+
+/// Check if a character is a token delimiter
+fn is_token_delimiter(ch: char) -> bool {
+    matches!(
+        ch,
+        '|' | ';'
+            | '('
+            | ')'
+            | '['
+            | ']'
+            | '{'
+            | '}'
+            | ','
+            | ' '
+            | '\t'
+            | '\n'
+            | '\r'
+    )
 }
 
 #[cfg(test)]

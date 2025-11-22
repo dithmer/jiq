@@ -4,11 +4,9 @@
 
 - **Real-time query execution** - See results as you type
 - **Context-aware autocomplete** - Intelligent suggestions for jq functions and JSON fields
-- **Full VIM keybindings** - Modal editing (INSERT/NORMAL/OPERATOR modes)
+- **VIM keybindings** - VIM-style editing for power users
 - **Syntax highlighting** - Colorized JSON output
 - **Flexible output** - Export results or query string
-- **Undo/redo support** - Never lose your work
-- **Zero configuration** - Works out of the box
 
 ## Installation
 
@@ -127,8 +125,10 @@ curl https://api.example.com/data | jiq
 | `dw` / `db` / `de` | Delete word forward/back/end |
 | `d$` / `d0` | Delete to end/start |
 | `dd` | Delete entire line |
+| `D` | Delete to end of line (same as `d$`) |
 | `cw` / `cb` / `ce` | Change word forward/back/end |
 | `c$` / `cc` | Change to end/entire line |
+| `C` | Change to end of line (same as `c$`) |
 
 **Undo/Redo**
 | Key | Action |

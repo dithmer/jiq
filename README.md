@@ -1,4 +1,4 @@
-# jiq — Interactive JSON Query tool with real-time query output
+# jiq — Interactive JSON query tool with real-time output
 
 ## Features
 

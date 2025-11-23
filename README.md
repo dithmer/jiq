@@ -8,6 +8,9 @@
 - **Syntax highlighting** - Colorized JSON output and jq query syntax (experimental)
 - **Flexible output** - Export results or query string
 
+## Demo
+[![Watch the video](https://img.youtube.com/vi/mTeEUXeQcAc/maxresdefault.jpg)](https://www.youtube.com/watch?v=mTeEUXeQcAc)
+
 ## Installation
 
 ### Requirements

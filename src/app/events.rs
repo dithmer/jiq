@@ -65,8 +65,8 @@ impl App {
             return true;
         }
 
-        // q: Exit application
-        if key.code == KeyCode::Char('q') {
+        // q: Exit application (not in insert mode)
+        if key.code == KeyCode::Char('q') && self.editor_mode != EditorMode::Insert {
             self.should_quit = true;
             return true;
         }

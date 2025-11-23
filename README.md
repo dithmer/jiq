@@ -187,7 +187,3 @@ echo $QUERY | xargs -I {} jq {} mydata.json
 ## License
 
 Dual-licensed under [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE)
-
-## Contributing
-
-Issues and pull requests welcome at [github.com/bellicose100xp/jiq](https://github.com/bellicose100xp/jiq)
